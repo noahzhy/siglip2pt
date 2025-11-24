@@ -1,4 +1,5 @@
 siglip_output/*
+*.onnx.data
 *.onnx
 
 # Byte-compiled / optimized / DLL files

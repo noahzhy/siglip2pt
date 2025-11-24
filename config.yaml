@@ -1,0 +1,29 @@
+# ==========================
+# =    training configs    =
+# ==========================
+# model_id: "google/siglip-so400m-patch14-384"
+model_id: "google/siglip2-base-patch16-224"
+image_height: &height 224
+image_width: &width 224
+image_input_shape: [3, *height, *width]
+text_input_length: 100
+batch_size: 16
+learning_rate: 5.0e-6
+num_epochs: 5
+
+train_output_dir: &train_output_dir "./siglip_output"
+
+
+# ==========================
+# =     export configs     =
+# ==========================
+export_model_path: *train_output_dir
+export_onnx_path: "siglip2pt_model.onnx"
+export_simplified_onnx_path: "siglip2pt_model_sim.onnx"
+export_opset: 18
+export_batch_size: 1 # 1 for static batch size, >1 for dynamic batch size
+export_height: *height
+export_width: *width
+# using onnxsim simplification
+export_no_simplify: false
+

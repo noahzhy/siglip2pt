@@ -1,50 +1,16 @@
+import os, sys
+
+import yaml
 import torch
 import torch.nn as nn
 from PIL import Image
 from transformers import SiglipProcessor, SiglipModel, Trainer, TrainingArguments
 from datasets import Dataset
 
-# ----------------------------------------------------------------
-# 1. Define model wrapper (critical step)
-# ----------------------------------------------------------------
-class SiglipForFineTuning(nn.Module):
-    """
-    Wrap HuggingFace's SiglipModel so we can compute the Loss in forward().
-    """
-    def __init__(self, model_id):
-        super().__init__()
-        self.model = SiglipModel.from_pretrained(model_id)
-        # The core of SigLIP uses sigmoid-based loss instead of softmax.
-        # We use BCEWithLogitsLoss where the target matrix is an identity
-        # matrix (1.0 on the diagonal, 0.0 elsewhere).
-        self.loss_fct = nn.BCEWithLogitsLoss()
 
-    def forward(self, input_ids, pixel_values, attention_mask=None, **kwargs):
-        # 1. Get model outputs
-        outputs = self.model(
-            input_ids=input_ids, 
-            pixel_values=pixel_values, 
-            attention_mask=attention_mask
-        )
+# load yaml from local file
+cfg = yaml.safe_load(open("config.yaml", "r"))
 
-        # `logits_per_image` has shape (batch_size, batch_size)
-        # It already includes SigLIP-specific bias and temperature scaling.
-        logits = outputs.logits_per_image
-        
-        # 2. Build labels
-        # Diagonal entries are positive samples (1.0), others are negatives (0.0)
-        batch_size = logits.shape[0]
-        labels = torch.eye(batch_size, device=logits.device)
-        
-        # 3. Compute loss
-        loss = self.loss_fct(logits, labels)
-        
-        # 4. Must return a dict containing the 'loss' key for Trainer to work
-        return {"loss": loss, "logits": logits}
-
-    # Allow the Trainer to save the internal HF model
-    def save_pretrained(self, save_directory):
-        self.model.save_pretrained(save_directory)
 
 # ----------------------------------------------------------------
 # 2. Configuration and loading
@@ -64,7 +30,7 @@ def create_dummy_dataset():
     for i in range(32): # create 32 samples
         # create 32 samples
         # random color image
-        img = Image.new('RGB', (384, 384), color=(i*5 % 255, (i*10)%255, 150))
+        img = Image.new('RGB', (224, 224), color=(i*5 % 255, (i*10)%255, 150))
         text = f"This is a photo of color id {i}"
         data.append({"image": img, "text": text})
     return Dataset.from_list(data)
@@ -93,8 +59,8 @@ def collate_fn(batch):
 # ----------------------------------------------------------------
 training_args = TrainingArguments(
     output_dir="./siglip_output",
-    per_device_train_batch_size=4,  # The larger the better if VRAM allows
-    num_train_epochs=3,
+    per_device_train_batch_size=16,  # The larger the better if VRAM allows
+    num_train_epochs=5,
     learning_rate=5e-6,             # SigLIP is also fine-tuning, so use a low learning rate
     logging_steps=1,
     remove_unused_columns=False,    # Must be False, otherwise the image field will be filtered out

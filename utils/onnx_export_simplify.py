@@ -54,13 +54,20 @@ def export_onnx(model_path: str = MODEL_PATH,
     hf_model = SiglipModel.from_pretrained(model_path)
     hf_model.eval()
 
-    wrapped = SiglipVisionExport(hf_model)
-
     dummy_input = torch.randn(batch_size, 3, height, width)
+
+    if batch_size > 1:
+        print("Note: exporting with dynamic batch size ...")
+        dynamic_axes = {
+            "pixel_values": {0: "batch_size"},
+            "image_embeds": {0: "batch_size"}
+        }
+    else:
+        dynamic_axes = None
 
     print(f"Exporting ONNX to {onnx_path} (opset={opset_version}) ...")
     torch.onnx.export(
-        wrapped,
+        SiglipVisionExport(hf_model),
         dummy_input,
         onnx_path,
         export_params=True,
@@ -68,10 +75,7 @@ def export_onnx(model_path: str = MODEL_PATH,
         do_constant_folding=True,
         input_names=["pixel_values"],
         output_names=["image_embeds"],
-        dynamic_axes={
-            "pixel_values": {0: "batch_size"},
-            "image_embeds": {0: "batch_size"}
-        }
+        dynamic_axes=dynamic_axes
     )
 
     print(f"ONNX export complete: {onnx_path}")
@@ -136,7 +140,7 @@ def main():
     parser.add_argument("--onnx_path",  default=ONNX_PATH)
     parser.add_argument("--sim_path",   default=SIMPLIFIED_ONNX_PATH)
     parser.add_argument("--opset",  type=int, default=OPSET_VERSION)
-    parser.add_argument("--batch",  type=int, default=8)
+    parser.add_argument("--batch",  type=int, default=1)
     parser.add_argument("--height", type=int, default=224)
     parser.add_argument("--width",  type=int, default=224)
     parser.add_argument("--no_simplify", action="store_true", help="Skip ONNX simplification step")
