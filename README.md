@@ -12,6 +12,12 @@ uv .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
+If you lived in China, you may need to use a mirror for huggingface downloads:
+
+```bash
+bash fuckGFW.sh
+```
+
 ## Usage
 
 ### Training

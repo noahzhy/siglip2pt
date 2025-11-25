@@ -1,10 +1,11 @@
 import os
 import argparse
+
+import onnx
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import SiglipModel
-import onnx
 
 try:
     from onnxsim import simplify
@@ -35,7 +36,6 @@ class SiglipVisionExport(nn.Module):
     def forward(self, pixel_values: torch.Tensor) -> torch.Tensor:
         # Extract visual features using the SigLIP model's image head
         features = self.model.get_image_features(pixel_values)
-
         # Apply L2 normalization on the last dim so outputs are normalized
         return F.normalize(features, p=2, dim=-1)
 

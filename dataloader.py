@@ -54,7 +54,7 @@ class TextNormalizer:
 # ----------------------------------------------------------------
 # 2. 图像增强定义
 # ----------------------------------------------------------------
-def get_train_transforms(image_size=384):
+def get_train_transforms(image_size=224):
     return transforms.Compose([
         # 随机缩放裁剪：让模型学会看局部（比如只看瓶底的容量，或只看口味图）
         transforms.RandomResizedCrop(image_size, scale=(0.8, 1.0), ratio=(0.9, 1.1)),
@@ -64,8 +64,8 @@ def get_train_transforms(image_size=384):
         transforms.RandomRotation(degrees=[90, 270]),
         # 颜色抖动：模拟不同光照，非常重要
         transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.05),
-        # 这里不转 Tensor/Normalize，因为 SiglipProcessor 会做
-        # 这里的输出依然是 PIL Image
+        # DO NOT convert to Tensor/Normalize, SiglipProcessor will do that
+        # output is PIL Image
     ])
 
 # ----------------------------------------------------------------
@@ -95,7 +95,7 @@ class SiglipDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.data.iloc[idx]
-        
+
         # 1. 加载图片
         img_path = os.path.join(self.image_root_dir, row['image_path'])
         try:
@@ -103,7 +103,7 @@ class SiglipDataset(Dataset):
         except Exception as e:
             print(f"Warning: Error loading image {img_path}: {e}")
             # 返回一个黑图防止崩掉，或者随机取一张
-            image = Image.new('RGB', (384, 384), (0, 0, 0))
+            image = Image.new('RGB', (224, 224), (0, 0, 0))
 
         # 2. 图像增强
         if self.transform:
@@ -141,11 +141,10 @@ class SiglipCollator:
             text=texts,
             images=images,
             padding="max_length", # 建议训练时设为 max_length 以保证维度一致
-            max_length=64,        # 根据你的文本平均长度调整，太长浪费显存
+            max_length=256,        # 根据你的文本平均长度调整，太长浪费显存
             truncation=True,
             return_tensors="pt"
         )
-        
         return inputs
 
 # ----------------------------------------------------------------
@@ -154,23 +153,19 @@ class SiglipCollator:
 if __name__ == "__main__":
     from transformers import SiglipProcessor
 
-    # 模拟配置
-    MODEL_ID = "google/siglip-so400m-patch14-384"
+    MODEL_ID = "google/siglip2-base-patch16-224"
     processor = SiglipProcessor.from_pretrained(MODEL_ID)
-    
-    # 创建虚拟 CSV 用于测试
+
     dummy_data = {
         'image_path': ['img1.jpg', 'img2.jpg'],
         'caption': ['Delicious spicy beef noodles 500 ml pack', 'Sweet Vanilla Ice Cream 1.5kg']
     }
     df = pd.DataFrame(dummy_data)
     df.to_csv('dummy_train.csv', index=False)
-    
-    # 创建虚拟图片
+
     Image.new('RGB', (100, 100)).save('img1.jpg')
     Image.new('RGB', (100, 100)).save('img2.jpg')
 
-    # 实例化 Dataset
     dataset = SiglipDataset(
         csv_file='dummy_train.csv', 
         image_root_dir='.', 
@@ -178,7 +173,6 @@ if __name__ == "__main__":
         transform=get_train_transforms()
     )
 
-    # 实例化 DataLoader
     collator = SiglipCollator(processor)
     dataloader = DataLoader(dataset, batch_size=2, shuffle=True, collate_fn=collator)
 
@@ -193,8 +187,7 @@ if __name__ == "__main__":
         decoded_text = processor.batch_decode(batch['input_ids'], skip_special_tokens=True)
         print("Processed Texts:", decoded_text)
         break
-    
-    # 清理垃圾文件
+
     os.remove('dummy_train.csv')
     os.remove('img1.jpg')
     os.remove('img2.jpg')

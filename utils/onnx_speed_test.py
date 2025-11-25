@@ -249,5 +249,3 @@ def benchmark(args):
 if __name__ == "__main__":
     args = get_args()
     benchmark(args)
-    # NOTICE: threads > 1 with CUDA Graph may not yield correct results due to shared graph capture.
-    # python3 utils/onnx_speed_test.py --model siglip_vision_sim.onnx --provider cuda --use_io_binding --enable_cuda_graph

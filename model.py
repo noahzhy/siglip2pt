@@ -18,23 +18,20 @@ class SiglipForFineTuning(nn.Module):
     def forward(self, input_ids, pixel_values, attention_mask=None, **kwargs):
         # 1. Get model outputs
         outputs = self.model(
-            input_ids=input_ids, 
-            pixel_values=pixel_values, 
+            input_ids=input_ids,
+            pixel_values=pixel_values,
             attention_mask=attention_mask
         )
 
         # `logits_per_image` has shape (batch_size, batch_size)
         # It already includes SigLIP-specific bias and temperature scaling.
         logits = outputs.logits_per_image
-        
         # 2. Build labels
         # Diagonal entries are positive samples (1.0), others are negatives (0.0)
         batch_size = logits.shape[0]
         labels = torch.eye(batch_size, device=logits.device)
-        
         # 3. Compute loss
         loss = self.loss_fct(logits, labels)
-        
         # 4. Must return a dict containing the 'loss' key for Trainer to work
         return {"loss": loss, "logits": logits}
 

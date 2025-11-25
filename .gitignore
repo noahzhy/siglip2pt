@@ -1,3 +1,4 @@
+.tmp/*
 siglip_output/*
 *.onnx.data
 *.onnx
