@@ -6,6 +6,7 @@ import torch.nn as nn
 from PIL import Image
 from transformers import SiglipProcessor, SiglipModel, Trainer, TrainingArguments
 from datasets import Dataset
+from model import SiglipForFineTuning
 
 
 # load yaml from local file

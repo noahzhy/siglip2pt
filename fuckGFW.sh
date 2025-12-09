@@ -1,3 +1,25 @@
+#!/bin/bash
+
+set -e
+
+# backup current sources.list
+sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
+
+# replace with Aliyun mirrors
+sudo tee /etc/apt/sources.list > /dev/null <<EOL
+deb https://mirrors.aliyun.com/ubuntu/ jammy main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ jammy-updates main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ jammy-backports main restricted universe multiverse
+deb https://mirrors.aliyun.com/ubuntu/ jammy-security main restricted universe multiverse
+EOL
+
+# update apt
+sudo apt update
+sudo apt upgrade -y
+
+echo "\33[32m[DONE]\33[0m Apt sources have been replaced with Aliyun mirrors successfully."
+
+
 # check os type and set profile file
 unameOut="$(uname -s)"
 case "${unameOut}" in
