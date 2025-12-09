@@ -18,6 +18,7 @@ cfg = yaml.safe_load(open("config.yaml", "r"))
 # ----------------------------------------------------------------
 # MODEL_ID = "google/siglip-so400m-patch14-384" # or the corresponding siglip2 checkpoint
 MODEL_ID = "google/siglip2-base-patch16-224"
+MODEL_ID = "google/siglip2-so400m-patch16-naflex"
 processor = SiglipProcessor.from_pretrained(MODEL_ID)
 
 # Instantiate our custom model
