@@ -1,16 +1,15 @@
 import torch
 import torch.nn as nn
-# from transformers import SiglipProcessor, SiglipModel
-from transformers import AutoModel, AutoProcessor
+from transformers import SiglipProcessor, SiglipModel
 
 
 class SiglipForFineTuning(nn.Module):
     """
-    Wrap HuggingFace's AutoModel so we can compute the Loss in forward().
+    Wrap HuggingFace's SiglipModel so we can compute the Loss in forward().
     """
     def __init__(self, model_id):
         super().__init__()
-        self.model = AutoModel.from_pretrained(model_id)
+        self.model = SiglipModel.from_pretrained(model_id)
         # The core of SigLIP uses sigmoid-based loss instead of softmax.
         # We use BCEWithLogitsLoss where the target matrix is an identity
         # matrix (1.0 on the diagonal, 0.0 elsewhere).
@@ -21,8 +20,7 @@ class SiglipForFineTuning(nn.Module):
         outputs = self.model(
             input_ids=input_ids,
             pixel_values=pixel_values,
-            attention_mask=attention_mask,
-            **kwargs
+            attention_mask=attention_mask
         )
 
         # `logits_per_image` has shape (batch_size, batch_size)
@@ -31,9 +29,7 @@ class SiglipForFineTuning(nn.Module):
         # 2. Build labels
         # Diagonal entries are positive samples (1.0), others are negatives (0.0)
         batch_size = logits.shape[0]
-        # Ensure labels match the device and dtype of logits
-        labels = torch.eye(batch_size, device=logits.device, dtype=logits.dtype)
-        
+        labels = torch.eye(batch_size, device=logits.device)
         # 3. Compute loss
         loss = self.loss_fct(logits, labels)
         # 4. Must return a dict containing the 'loss' key for Trainer to work
@@ -45,34 +41,28 @@ class SiglipForFineTuning(nn.Module):
 
 
 if __name__ == "__main__":
-    from PIL import Image
-
-    # model_id = "google/siglip2-base-patch16-224"
     model_id = "google/siglip2-base-patch16-naflex"
+    model_id = "google/siglip2-base-patch16-224"
     # Simple test
-    processor = AutoProcessor.from_pretrained(model_id)
+    processor = SiglipProcessor.from_pretrained(model_id)
     model = SiglipForFineTuning(model_id)
 
-    texts = ["a photo of a cat", "a photo of a bear"]
-    # # Use rand (0-1) instead of randn (Gaussian) to avoid negative values
-    # images = torch.rand(2, 3, 224, 224) 
-    # images = (images * 255).to(torch.uint8)
-    images = [
-        Image.open("data/cat.jpg"),
-        Image.open("data/bear.jpg"),
-    ]
+    texts = ["a photo of a cat", "a photo of a dog"]
+    images = torch.randn(2, 3, 224, 224)  # Dummy images
 
     inputs = processor(
         text=texts,
         images=images,
         return_tensors="pt",
-        padding="max_length",
+        padding=True,
         truncation=True,
         max_length=32
     )
 
-    outputs = model(**inputs)
+    outputs = model(
+        input_ids=inputs.input_ids,
+        pixel_values=inputs.pixel_values
+    )
 
     print("Loss:", outputs["loss"].item())
-    print("Logits shape:", outputs["logits"].shape)
     print("Logits:", outputs["logits"])

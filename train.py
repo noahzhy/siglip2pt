@@ -18,11 +18,14 @@ cfg = yaml.safe_load(open("config.yaml", "r"))
 # ----------------------------------------------------------------
 # MODEL_ID = "google/siglip-so400m-patch14-384" # or the corresponding siglip2 checkpoint
 MODEL_ID = "google/siglip2-base-patch16-224"
-MODEL_ID = "google/siglip2-so400m-patch16-naflex"
+# MODEL_ID = "google/siglip2-so400m-patch16-naflex"
+MODEL_ID = "google/siglip2-base-patch16-naflex"
 processor = SiglipProcessor.from_pretrained(MODEL_ID)
 
 # Instantiate our custom model
 model = SiglipForFineTuning(MODEL_ID)
+target_height = 512
+target_width = 512
 
 # ----------------------------------------------------------------
 # 3. Prepare dummy dataset
@@ -32,7 +35,7 @@ def create_dummy_dataset():
     for i in range(32): # create 32 samples
         # create 32 samples
         # random color image
-        img = Image.new('RGB', (224, 224), color=(i*5 % 255, (i*10)%255, 150))
+        img = Image.new('RGB', (target_width, target_height), color=(i*5 % 255, (i*10)%255, 150))
         text = f"This is a photo of color id {i}"
         data.append({"image": img, "text": text})
     return Dataset.from_list(data)

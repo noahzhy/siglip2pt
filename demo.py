@@ -9,6 +9,8 @@ def get_image_embeddings(ckpt: str, image_path: str) -> torch.Tensor:
     processor = AutoProcessor.from_pretrained(ckpt)
     image = load_image(image_path)
     inputs = processor(images=[image], return_tensors="pt").to(model.device)
+    # input shapes
+    print(f"Input pixel values shape: {inputs['pixel_values'].shape}")
     with torch.no_grad():
         embeddings = model.get_image_features(**inputs)
     print(f"Embeddings shape: {embeddings.shape}")
@@ -27,6 +29,7 @@ def zero_shot_classification(ckpt: str, image_path: str, labels: list[str]) -> l
 
 def main():
     ckpt = "google/siglip2-so400m-patch16-naflex"
+    ckpt = "google/siglip2-base-patch16-naflex"
     image_path = "data/000000000285.jpg"
     labels = ["2 cats", "a plane", "a bear"]
 
