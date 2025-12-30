@@ -44,8 +44,8 @@ def export_onnx(model_path: str = MODEL_PATH,
                 onnx_path: str = ONNX_PATH,
                 opset_version: int = OPSET_VERSION,
                 batch_size: int = 8,
-                height: int = 224,
-                width: int = 224):
+                height: int = 384,
+                width: int = 384):
     """Export the SigLIP vision model to an ONNX file.
 
     The exported model returns a single tensor of normalized image embeddings.

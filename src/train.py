@@ -2,30 +2,32 @@ import os, sys
 
 import yaml
 import torch
+import tensorboard
 import torch.nn as nn
 from PIL import Image
-from transformers import SiglipProcessor, SiglipModel, Trainer, TrainingArguments
 from datasets import Dataset
+from transformers import Trainer, TrainingArguments, AutoModel, AutoProcessor
+
 from model import SiglipForFineTuning
 
 
 # load yaml from local file
-cfg = yaml.safe_load(open("config.yaml", "r"))
+cfg = yaml.safe_load(open("configs/config.yaml", "r"))
 
 
 # ----------------------------------------------------------------
 # 2. Configuration and loading
 # ----------------------------------------------------------------
 # MODEL_ID = "google/siglip-so400m-patch14-384" # or the corresponding siglip2 checkpoint
-MODEL_ID = "google/siglip2-base-patch16-224"
 # MODEL_ID = "google/siglip2-so400m-patch16-naflex"
+# MODEL_ID = "google/siglip2-base-patch16-224"
 MODEL_ID = "google/siglip2-base-patch16-naflex"
-processor = SiglipProcessor.from_pretrained(MODEL_ID)
+processor = AutoProcessor.from_pretrained(MODEL_ID)
 
 # Instantiate our custom model
 model = SiglipForFineTuning(MODEL_ID)
-target_height = 512
-target_width = 512
+target_height = 224
+target_width  = 224
 
 # ----------------------------------------------------------------
 # 3. Prepare dummy dataset
@@ -65,12 +67,12 @@ def collate_fn(batch):
 training_args = TrainingArguments(
     output_dir="./siglip_output",
     per_device_train_batch_size=16,  # The larger the better if VRAM allows
-    num_train_epochs=5,
+    num_train_epochs=50,
     learning_rate=5e-6,             # SigLIP is also fine-tuning, so use a low learning rate
     logging_steps=1,
     remove_unused_columns=False,    # Must be False, otherwise the image field will be filtered out
     save_strategy="no",
-    report_to="none",
+    report_to=["tensorboard"],
     fp16=torch.cuda.is_available()  # Mixed precision is recommended
 )
 

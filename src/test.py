@@ -1,6 +1,7 @@
 import torch
 from PIL import Image
-from transformers import SiglipProcessor, SiglipModel
+# from transformers import SiglipProcessor, SiglipModel
+from transformers import AutoModel, AutoProcessor
 import torch.nn.functional as F
 import numpy as np
 
@@ -18,8 +19,8 @@ print(f"Loading model: {MODEL_PATH} (device: {device})...")
 # 2. Load model and processor
 # ----------------------------------------------------------------
 # Note: we can load SiglipModel directly; it contains the vision encoder and projection head
-model = SiglipModel.from_pretrained(MODEL_PATH).to(device)
-processor = SiglipProcessor.from_pretrained(MODEL_PATH)
+model = AutoModel.from_pretrained(MODEL_PATH).to(device)
+processor = AutoProcessor.from_pretrained(MODEL_PATH)
 
 # Set to evaluation mode (disable dropout, etc.)
 model.eval()
@@ -56,7 +57,7 @@ def get_image_embeddings(image_paths, normalize=True):
 # 4. Run example
 # ----------------------------------------------------------------
 if __name__ == "__main__":
-    img_paths = ["coke.jpg", "coke.jpg"]
+    img_paths = ["data/coke.jpg", "data/coke.jpg"]
 
     print("Starting feature extraction...")
     embeddings = get_image_embeddings(img_paths)

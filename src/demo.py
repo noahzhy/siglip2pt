@@ -28,10 +28,10 @@ def zero_shot_classification(ckpt: str, image_path: str, labels: list[str]) -> l
 
 
 def main():
-    ckpt = "google/siglip2-so400m-patch16-naflex"
+    # ckpt = "google/siglip2-so400m-patch16-naflex"
     ckpt = "google/siglip2-base-patch16-naflex"
-    image_path = "data/000000000285.jpg"
-    labels = ["2 cats", "a plane", "a bear"]
+    image_path = "data/coke.jpg"
+    labels = ["a cat", "a dog", "a bear", "Coca Cola", "可口可乐"]
 
     embeddings = get_image_embeddings(ckpt, image_path)
     print("\n" + "="*50 + "\n")

@@ -2,6 +2,7 @@
 siglip_output/*
 *.onnx.data
 *.onnx
+transformers.js/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -2,7 +2,8 @@
 # =    training configs    =
 # ==========================
 # model_id: "google/siglip-so400m-patch14-384"
-model_id: "google/siglip2-base-patch16-224"
+# model_id: "google/siglip2-base-patch16-224"
+model_id: "google/siglip2-base-patch16-naflex"
 image_height: &height 224
 image_width: &width 224
 image_input_shape: [3, *height, *width]
